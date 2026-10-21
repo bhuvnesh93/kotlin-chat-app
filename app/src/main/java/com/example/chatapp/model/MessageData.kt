@@ -13,8 +13,9 @@ data class MessageData(
     val type: String = "",
     var members: List<Members>,
     var message: String = "",
+    var url: String = "",
 ) {
-    constructor() : this("", 0, "", "", "", emptyList(), "")
+    constructor() : this("", 0, "", "", "", emptyList(), "","")
 }
 
 data class Members(

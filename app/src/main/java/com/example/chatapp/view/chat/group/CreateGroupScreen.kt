@@ -59,14 +59,9 @@ fun CreateGroupScreen(
     navController: NavController,
     viewModel: UserViewModel,
     chatViewModel: ChatViewModel,
+    users: List<UserData>
 ) {
-    val usersJson = navController.currentBackStackEntry?.arguments?.getString("selectedMembers")
-
-    val users: List<UserData> =
-        usersJson.let { Gson().fromJson(it, object : TypeToken<List<UserData>>() {}.type) }
-
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
     var groupName by remember { mutableStateOf("") }
 
     val userData by viewModel.userData.collectAsState()
@@ -129,8 +124,6 @@ fun CreateGroupScreen(
                     contentAlignment = Alignment.Center,
                 ) {
                     if (selectedImageUri != null) {
-//                        val painter = rememberAsyncImagePainter(selectedImageUri)
-//                        CircularImage(painter = painter)
                         AsyncImage(
                             placeholder = painterResource(R.drawable.ic_user_placeholder),
                             error = painterResource(id = R.drawable.ic_user_placeholder),
