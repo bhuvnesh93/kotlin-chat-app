@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -23,13 +24,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -52,8 +58,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -63,10 +74,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.chatapp.R
+import com.example.chatapp.components.AppImage
 import com.example.chatapp.constants.DialogType
 import com.example.chatapp.model.GroupData
+import com.example.chatapp.model.LastMessage
 import com.example.chatapp.model.UserData
 import com.example.chatapp.navigation.Screen
+import com.example.chatapp.view.chat.components.ChatsListItem
 import com.example.chatapp.viewmodel.ChatViewModel
 import com.example.chatapp.viewmodel.UserViewModel
 import com.google.firebase.Firebase
@@ -130,15 +144,19 @@ fun ChatsScreen(
 
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp, 0.dp, 0.dp, 0.dp),
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                navController.navigate(Screen.NewChatScreen.route)
+            }) {
+                Icon(Icons.Filled.Add, contentDescription = "Add new item")
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "ChatApp",
-                        color = colorResource(id = R.color.white),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .heightIn(max = 24.dp)
+                        style = TextStyle(fontSize = 16.sp, color = Color.White),
                     )
                 },
                 navigationIcon = {},
@@ -155,8 +173,8 @@ fun ChatsScreen(
                         onDismissRequest = { menuExpanded = false }) {
                         DropdownMenuItem(onClick = {
                             menuExpanded = false
-                            navController.navigate(Screen.NewChatScreen.route)
-                        }, text = { Text("New Chat") })
+                            navController.navigate(Screen.AddMemberScreen.route)
+                        }, text = { Text("New Group") })
                         DropdownMenuItem(onClick = {
                             menuExpanded = false
                             navController.navigate(Screen.ProfileDetailScreen.route)
@@ -173,14 +191,15 @@ fun ChatsScreen(
                         }, text = { Text("Logout") })
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(colorResource(R.color.purple_500)),
+                colors = TopAppBarDefaults.topAppBarColors(colorResource(R.color.teal_700)),
             )
         }) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
+                .padding(top = 8.dp, bottom = 8.dp)
+//                .consumeWindowInsets(innerPadding)
         ) {
             items(chatList, key = { chatItem -> chatItem.groupId }) { chatItem ->
                 ChatsListItem(chatItem = chatItem) {
@@ -195,43 +214,4 @@ fun ChatsScreen(
     }
 }
 
-@Composable
-fun ChatsListItem(chatItem: GroupData, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-            .clickable {
-                onClick()
-            }, elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AsyncImage(
-                model = chatItem.imageUrl,
-                contentDescription = "",
-                contentScale = ContentScale.Crop, // Crop to fill the circular shape
-                modifier = Modifier
-                    .size(60.dp)
-                    .clip(CircleShape) // Apply circular clip
-            )
-            Column(
-                Modifier
-                    .padding(start = 16.dp, end = 16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(text = chatItem.name, fontWeight = FontWeight.ExtraBold)
-                chatItem.lastMessage?.let {
-                    Text(
-                        text = it.message,
-                        fontWeight = FontWeight.Normal
-                    )
-                }
-            }
-        }
-    }
-}
+

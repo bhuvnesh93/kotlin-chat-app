@@ -1,7 +1,9 @@
 package com.example.chatapp.view.chat.group
 
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -9,15 +11,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -33,25 +36,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.chatapp.R
 import com.example.chatapp.components.AppBarView
+import com.example.chatapp.model.GroupData
 import com.example.chatapp.model.GroupDetailMembersData
-import com.example.chatapp.model.GroupMembers
 import com.example.chatapp.model.UserData
 import com.example.chatapp.navigation.Screen
-import com.example.chatapp.view.chat.NewChatListItem
 import com.example.chatapp.viewmodel.ChatViewModel
 import com.example.chatapp.viewmodel.UserViewModel
+import com.google.gson.Gson
 
 @Composable
 fun GroupDetailScreen(
@@ -65,6 +70,7 @@ fun GroupDetailScreen(
     val userList by chatViewModel.userList.collectAsState()
 
     var groupName by remember { mutableStateOf("") }
+    var groupImage by remember { mutableStateOf("") }
     var groupMembersList: List<GroupDetailMembersData> by remember { mutableStateOf(emptyList()) }
     var totalMembers by remember { mutableIntStateOf(0) }
     var isSelfUserAdmin by remember { mutableStateOf(false) }
@@ -73,6 +79,7 @@ fun GroupDetailScreen(
     LaunchedEffect(userChatGroups) {
         val groupDetail = userChatGroups[groupId];
         groupName = groupDetail!!.name
+        groupImage = groupDetail.imageUrl
 //        setGroupImage(groupDetail.image_url);
         if (groupDetail.members[userData.uid] != null) {
             isSelfUserAdmin = groupDetail.members[userData.uid]!!.admin as Boolean
@@ -111,7 +118,7 @@ fun GroupDetailScreen(
                     }
                 }
             } else {
-                totalMembers = totalMembers - 1
+                totalMembers -= 1
             }
         }
     }
@@ -125,48 +132,87 @@ fun GroupDetailScreen(
                 "Group Detail", onBackNavClicked = { navController.popBackStack() }
             )
         }) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            Text(groupName)
-            Text("$totalMembers Members")
-            if (isSelfUserAdmin && isSelfUserActive)
-                Text("Add Member", modifier = Modifier.clickable {
-                    navController.navigate(Screen.AddNewMemberScreen.route + "/$groupMembersList/$groupId")
-                })
-            if (groupMembersList.isNotEmpty())
-                LazyColumn(
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(10.dp),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AsyncImage(
+                    placeholder = painterResource(R.drawable.ic_user_placeholder),
+                    error = painterResource(R.drawable.ic_user_placeholder),
+                    model = groupImage,
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop, // Crop to fill the circular shape
                     modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f)
-                ) {
-                    items(groupMembersList, key = { item -> item.uid }) { item ->
-                        GroupDetailMembersListItem(
-                            viewModel,
-                            chatViewModel,
-                            item = item,
-                            groupId,
-                            onClick = {
-                                //
+                        .size(100.dp)
+                        .clip(CircleShape) // Apply circular clip
+                )
+                Text(
+                    groupName,
+                    style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
+            Text(
+                "$totalMembers Members",
+                style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(top = 10.dp, bottom = 10.dp)
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = Color.White, shape = RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+//                    .border(width = 1.dp, color = Color.Black, shape = RoundedCornerShape(10.dp))
+            ) {
+                if (isSelfUserAdmin && isSelfUserActive)
+                    Text(
+                        "Add Member",
+                        style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(5.dp)
+                            .clickable {
+                                val serializedObjects = Gson().toJson(groupMembersList)
+                                navController.navigate(Screen.AddNewMemberScreen.route + "/$serializedObjects/$groupId")
                             })
+                HorizontalDivider(thickness = 1.dp, color = Color.Gray)
+                if (groupMembersList.isNotEmpty())
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f)
+                    ) {
+                        items(groupMembersList, key = { item -> item.uid }) { item ->
+                            GroupDetailMembersListItem(
+                                item = item,
+                                groupId,
+                                userChatGroups,
+                                userData,
+                                onClick = {
+                                    //
+                                })
+                        }
                     }
-                }
+            }
         }
     }
 }
 
 @Composable
 fun GroupDetailMembersListItem(
-    viewModel: UserViewModel,
-    chatViewModel: ChatViewModel,
     item: GroupDetailMembersData,
     groupId: String,
+    userChatGroups: Map<String, GroupData> = emptyMap(),
+    userData: UserData = UserData(),
     onClick: () -> Unit,
 ) {
-
     var isOverFlowShown by remember { mutableStateOf(false) }
     var menuExpanded by remember { mutableStateOf(false) }
-
-    val userData by viewModel.userData.collectAsState()
-    val userChatGroups by chatViewModel.userChatGroups.collectAsStateWithLifecycle()
 
     LaunchedEffect(userChatGroups) {
         val groupDetail = userChatGroups[groupId];
@@ -175,43 +221,33 @@ fun GroupDetailMembersListItem(
                 && item.uid != userData.uid)
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-            .clickable {
-                onClick()
-            }, elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
-    ) {
+    Column() {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                Modifier
+            AsyncImage(
+                placeholder = painterResource(R.drawable.ic_user_placeholder),
+                error = painterResource(id = R.drawable.ic_user_placeholder),
+                model = item.imageUrl,
+                contentDescription = "",
+                contentScale = ContentScale.Crop, // Crop to fill the circular shape
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(CircleShape) // Apply circular clip
+            )
+            Column(
+                modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
             ) {
-                AsyncImage(
-                    placeholder = painterResource(R.drawable.ic_user_placeholder),
-                    error = painterResource(id = R.drawable.ic_user_placeholder),
-                    model = item.imageUrl,
-                    contentDescription = "",
-                    contentScale = ContentScale.Crop, // Crop to fill the circular shape
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape) // Apply circular clip
+                Text(
+                    text = item.name,
+                    style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                    modifier = Modifier.padding(start = 10.dp)
                 )
-                Column(Modifier.padding(16.dp)) {
-                    Text(
-                        text = item.name, fontWeight = FontWeight.ExtraBold, modifier = Modifier
-                            .fillMaxWidth()
-                    )
-                }
             }
             if (item.admin == true)
                 Text("Admin")
@@ -237,26 +273,46 @@ fun GroupDetailMembersListItem(
 
                 }
             } else if (isOverFlowShown && item.admin!!) {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "Menu",
-                        tint = colorResource(id = R.color.black)
-                    )
-                }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(onClick = {
-                        menuExpanded = false
-                        //
-                    }, text = { Text("Remove") })
-                    DropdownMenuItem(onClick = {
-                        menuExpanded = false
-                        //
-                    }, text = { Text("Remove Admin") })
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Menu",
+                            tint = colorResource(id = R.color.black)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                        modifier = Modifier.wrapContentWidth()
+                    ) {
+                        DropdownMenuItem(onClick = {
+                            menuExpanded = false
+                            //
+                        }, text = { Text("Remove") })
+                        DropdownMenuItem(onClick = {
+                            menuExpanded = false
+                            //
+                        }, text = { Text("Remove Admin") })
+                    }
                 }
             }
         }
+        HorizontalDivider(thickness = 1.dp, color = Color.Gray)
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun GroupDetailMembersListItemPreview() {
+    GroupDetailMembersListItem(
+        item = GroupDetailMembersData(
+            "123",
+            "Bhuvneshwar Garg",
+            "",
+            true
+        ),
+        groupId = "123",
+        onClick = {}
+    )
 }

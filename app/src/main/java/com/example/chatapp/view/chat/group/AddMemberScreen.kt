@@ -1,7 +1,10 @@
 package com.example.chatapp.view.chat.group
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,7 +18,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,16 +35,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.chatapp.R
 import com.example.chatapp.components.AppBarView
+import com.example.chatapp.components.AppImage
 import com.example.chatapp.model.UserData
 import com.example.chatapp.navigation.Screen
-import com.example.chatapp.view.chat.NewChatListItem
+import com.example.chatapp.view.chat.components.NewChatListItem
+import com.example.chatapp.view.chat.components.SelectedMemberListItem
 import com.example.chatapp.viewmodel.ChatViewModel
 import com.example.chatapp.viewmodel.UserViewModel
 import com.google.gson.Gson
@@ -64,48 +82,26 @@ fun AddMemberScreen(
                 .fillMaxSize()
         ) {
             if (selectedMembers.isNotEmpty())
+//                SelectedMembersView(selectedMembers = selectedMembers, onDelete = {
+//                    selectedMembers = selectedMembers - it
+//                })
                 LazyRow(
-//                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+//                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .height(100.dp) // Give LazyRow a fixed height
-//                        .background(Color.LightGray)
+//                        .background(Color.White)
                         .padding(8.dp)
                 ) {
                     items(selectedMembers) { item ->
-                        Column(
-                            modifier = Modifier
-//                                .border(1.dp, Color.Black)
-                                .height(130.dp)
-                                .width(100.dp)
-                                .padding(8.dp)
-                                .clickable(onClick = {
-                                    selectedMembers = selectedMembers - item
-                                }),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            AsyncImage(
-                                placeholder = painterResource(R.drawable.ic_user_placeholder),
-                                error = painterResource(id = R.drawable.ic_user_placeholder),
-                                model = item.imageUrl,
-                                contentDescription = "",
-                                contentScale = ContentScale.Crop, // Crop to fill the circular shape
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape) // Apply circular clip
-                            )
-                            Text(
-                                item.name, modifier = Modifier
-                            )
-                        }
-
+                        SelectedMemberListItem(selectedMember = item, onDelete = {
+                            selectedMembers = selectedMembers - item
+                        })
                     }
                 }
             if (selectedMembers.isNotEmpty())
                 Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
                     .weight(1f)
             ) {
                 items(userList, key = { item -> item.uid }) { item ->
@@ -119,10 +115,15 @@ fun AddMemberScreen(
                 }
             }
             if (selectedMembers.isNotEmpty())
-                Button(onClick = {
-                    val serializedObjects = Gson().toJson(selectedMembers)
-                    navController.navigate(Screen.CreateGroupScreen.route + "/$serializedObjects")
-                }, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        val serializedObjects = Gson().toJson(selectedMembers)
+                        navController.navigate(Screen.CreateGroupScreen.route + "/$serializedObjects")
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp, start = 20.dp, end = 20.dp)
+                ) {
                     Text("Continue")
                 }
         }

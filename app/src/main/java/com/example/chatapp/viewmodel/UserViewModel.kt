@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chatapp.model.AuthRepository
 import com.example.chatapp.model.UserData
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,7 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchUserData() {
         viewModelScope.launch {
             _isLoading.value = true
-//            delay(2000)
+            delay(1000)
             authRepository.getLoginData(getApplication())
                 .collect { it ->
                     _userData.value = it
